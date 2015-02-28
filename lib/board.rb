@@ -1,15 +1,21 @@
 require 'byebug'
 class Board
-  attr_accessor :grid
+  attr_accessor :grid, :player_colors
 
-  COLORS = { one: :red, two: :yellow, three: :green, four: :cyan, five: :blue, six: :magenta, nil => :white }
+  PLAYERS = [:one, :two, :three, :four, :five, :six]
+  COLORS = [:red, :green, :blue, :cyan, :magenta, :yellow]
   DIRECTIONS = { right: :left, left: :right, upright: :downleft, upleft: :downright, downright: :upleft, downleft: :upright }
-  ROW_SIZES = [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1]
+  ROW_SIZES = [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1, 0]
   ROW_OFFSETS = { left: 0, right: 0, upleft: -1, upright: -1, downleft: 1, downright: 1 }
 
-  def initialize(fill = true)
+  FOUR_POSITIONS = [[0,0], [1,0], [1,1], [2,0], [2,1], [2,2], [3,0], [3,1], [3,2], [3,3]]
+  FIVE_POSITIONS = [[4,9], [4,10], [4,11], [4,12]]
+
+  def initialize(options = {})
+    @player_colors = Hash[PLAYERS.zip(COLORS.shuffle)]
     @grid = Array.new(17) { |i| Array.new(ROW_SIZES[i]) }
-    populate_board if fill
+    @players = options[:players] || []
+    populate_board
   end
 
   def [](position)
@@ -72,12 +78,11 @@ class Board
   def step(from, direction)
     return [from[0], from[1] + 1] if direction == :right
     return [from[0], from[1] - 1] if direction == :left
-
     from_row = from[0]
     to_row = from_row + ROW_OFFSETS[direction]
-
+    debugger if ROW_SIZES[from_row].nil?
     from_row_size = ROW_SIZES[from_row]
-    to_row_size = ROW_SIZES[to_row]
+    to_row_size = ROW_SIZES[to_row] || -1000
 
     row_size_difference = to_row_size - from_row_size
 
@@ -95,20 +100,48 @@ class Board
     step(step(from, direction), direction)
   end
 
-  def graph
-    letters = " " + "            " + "a b c d e f g h i j k l m n o p q r s t "
-    @grid.each_with_index do |row, index|
-      row_str = "#{index.to_s.rjust(2)} : #{row.length.to_s.rjust(2)} " + (" ") * (13 - row.length)
-      row.each do |col|
-        row_str += "#{icon(col)} "
+  def render(selected_position = nil)
+    puts graph(selected_position)
+  end
+
+  def winner
+    # TODO make these into constants, or add parameter to check only current player
+    return :four if @grid[0..3].flatten.all? { |position| position == :four }
+    return :one if @grid[-4..-1].flatten.all? { |position| position == :one }
+
+    three_positions = []
+    five_positions = []
+
+    @grid[4..7].each_with_index do |row, index|
+      count = (index - 3).abs
+      (0..count).each do |col|
+        three_positions << row[col]
+        five_positions << row[-1 - col]
       end
-      puts row_str
     end
-    puts letters
+
+    return :three if three_positions.all? { |position| position == :three }
+    return :five if five_positions.all? { |position| position == :five }
+
+    two_positions = []
+    six_positions = []
+
+    @grid[9..12].each_with_index do |row, index|
+      count = index
+      (0..count).each do |col|
+        two_positions << row[col]
+        six_positions << row[-1 - col]
+      end
+    end
+
+    return :two if two_positions.all? { |position| position == :two }
+    return :six if six_positions.all? { |position| position == :six }
+
+    nil
   end
 
   def dup
-    duplicate = Board.new(false)
+    duplicate = Board.new()
     @grid.each_with_index do |row, row_index|
       row.each_with_index do |col, col_index|
         duplicate[[row_index, col_index]] = col
@@ -119,33 +152,49 @@ class Board
 
   private
 
-    def icon(holder)
-      '●'.colorize(COLORS[holder])
+    def icon(holder, selected = false)
+      (selected ? '◎' : '●').colorize(@player_colors[holder])
+    end
+
+    def graph(selected_position)
+      graph = ""
+      @grid.each_with_index do |row, index|
+        row_str = (" ") * (13 - row.length)
+        row.each_with_index do |col, index2|
+          row_str += "#{icon(col, selected_position == [index, index2])} "
+        end
+        graph << row_str << "\n"
+      end
+      graph
     end
 
     def populate_board
       # top
-      @grid[0..3].each do |row|
-        row.map! { :one }
+      if @players.include?(:one)
+        @grid[0..3].each do |row|
+          row.map! { :one }
+        end
       end
       # bottom
-      @grid[-4..-1].each do |row|
-        row.map! { :four }
+      if@players.include?(:four)
+        @grid[-4..-1].each do |row|
+          row.map! { :four }
+        end
       end
       # upper middle
       @grid[4..7].each_with_index do |row, index|
         count = (index - 3).abs
         (0..count).each do |col|
-          row[col] = :six
-          row[-1 - col] = :two
+          row[col] = :six if @players.include?(:six)
+          row[-1 - col] = :two if @players.include?(:two)
         end
       end
       # lower middle
       @grid[9..12].each_with_index do |row, index|
         count = index
         (0..count).each do |col|
-          row[col] = :five
-          row[-1 - col] = :three
+          row[col] = :five if @players.include?(:five)
+          row[-1 - col] = :three if @players.include?(:three)
         end
       end
     end

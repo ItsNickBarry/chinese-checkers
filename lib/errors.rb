@@ -21,3 +21,9 @@ class IllegalMoveError < ArgumentError
     "That move is not legal."
   end
 end
+
+class PlayerCountError < StandardError
+  def message
+    "Game must be played with 2, 3, 4, or 6 players."
+  end
+end
