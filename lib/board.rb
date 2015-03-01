@@ -100,8 +100,8 @@ class Board
     step(step(from, direction), direction)
   end
 
-  def render(selected_position = nil)
-    puts graph(selected_position)
+  def render(selected_position = nil, targeted_position = nil)
+    puts graph(selected_position, targeted_position)
   end
 
   def winner
@@ -140,6 +140,20 @@ class Board
     nil
   end
 
+  def pieces_of(number)
+    pieces = []
+    @grid.each_with_index do |row, row_index|
+      row.each_with_index do |piece, col_index|
+        pieces << [row_index, col_index] if piece == number
+      end
+    end
+    pieces
+  end
+
+  def movable_pieces_of(number)
+    pieces_of(number).select { |position| moves(position) != [] }
+  end
+
   def dup
     duplicate = Board.new()
     @grid.each_with_index do |row, row_index|
@@ -152,16 +166,17 @@ class Board
 
   private
 
-    def icon(holder, selected = false)
-      (selected ? '◎' : '●').colorize(@player_colors[holder])
+    def icon(holder, options = {} )
+      (options[:targeted] ? '◎' : options[:selected] ? '◉' : '●').colorize(@player_colors[holder])
     end
 
-    def graph(selected_position)
+    def graph(selected_position, targeted_position)
       graph = ""
-      @grid.each_with_index do |row, index|
+      @grid.each_with_index do |row, row_index|
         row_str = (" ") * (13 - row.length)
-        row.each_with_index do |col, index2|
-          row_str += "#{icon(col, selected_position == [index, index2])} "
+        row.each_with_index do |col, col_index|
+          here = [row_index, col_index]
+          row_str += "#{icon(col, { selected: (selected_position == here), targeted: (targeted_position == here) })} "
         end
         graph << row_str << "\n"
       end

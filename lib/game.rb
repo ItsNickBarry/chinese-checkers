@@ -35,7 +35,6 @@ class ChineseCheckers
         @board.execute_move(move.first, move.last, current_player.number)
       rescue => e
         puts e.message
-        puts e.backtrace
         retry
       end
 

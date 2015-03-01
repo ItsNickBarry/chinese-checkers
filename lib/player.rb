@@ -14,16 +14,22 @@ class HumanPlayer
   def input_move(board)
     puts "#{@name}, please select a sequence of tiles to move your piece. (jiol,m to move, enter to select, ctrl + enter to submit)"
     begin
-      current_position = [8, 4]
       moves = []
+      tab_moves = board.movable_pieces_of(@number)
+      current_position = tab_moves.first
+
       until moves.length == 2
-        board.render(current_position)
-        puts "Selected piece: #{moves[0]}" if moves.length == 1
+        board.render(moves[0], current_position)
         keypress = read_keypress
 
         case keypress
+        when "\t"
+          tab_moves << tab_moves.shift
+          step = tab_moves.first
         when "\r"
+          # TODO only allow selecting of movable pieces / valid target positions
           moves << current_position
+          tab_moves = board.moves(current_position)
         when "o"
           step = board.step(current_position, :upright)
         when "m"
@@ -38,6 +44,7 @@ class HumanPlayer
           step = board.step(current_position, :downright)
         when "\177"
           moves.pop
+          tab_moves = board.movable_pieces_of(@number)
         when "\u0003"
           exit 0
         end
@@ -45,7 +52,6 @@ class HumanPlayer
       end
     rescue => e
       send_message(e.message)
-      send_message(e.backtrace)
       retry
     end
     moves
