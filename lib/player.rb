@@ -19,6 +19,7 @@ class HumanPlayer
       current_position = tab_moves.first
 
       until moves.length == 2
+        system "clear"
         board.render({ selected: moves[0], targeted: current_position })
         keypress = read_keypress
 

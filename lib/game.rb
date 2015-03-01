@@ -57,6 +57,7 @@ if __FILE__ == $0
     raise PlayerCountError.new unless [2,3,4,6].include?(players.length)
   rescue => e
     puts e.message
+    retry
   end
   game = ChineseCheckers.new({ players: players })
   game.play
