@@ -100,8 +100,8 @@ class Board
     step(step(from, direction), direction)
   end
 
-  def render(selected_position = nil, targeted_position = nil)
-    puts graph(selected_position, targeted_position)
+  def render(options = {})
+    puts graph(options)
   end
 
   def winner
@@ -166,17 +166,17 @@ class Board
 
   private
 
-    def icon(holder, options = {} )
-      (options[:targeted] ? '◎' : options[:selected] ? '◉' : '●').colorize(@player_colors[holder])
+    def icon(holder, selected = false, targeted = false)
+      (targeted ? '◎' : selected ? '◉' : '●').colorize(@player_colors[holder])
     end
 
-    def graph(selected_position, targeted_position)
+    def graph(options = {})
       graph = ""
       @grid.each_with_index do |row, row_index|
         row_str = (" ") * (13 - row.length)
         row.each_with_index do |col, col_index|
           here = [row_index, col_index]
-          row_str += "#{icon(col, { selected: (selected_position == here), targeted: (targeted_position == here) })} "
+          row_str += "#{icon(col, options[:selected] == [row_index, col_index], options[:targeted] == [row_index, col_index])} "
         end
         graph << row_str << "\n"
       end
