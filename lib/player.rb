@@ -7,20 +7,19 @@ class HumanPlayer
     @number = number
   end
 
-  def send_message(message)
-    puts message
-  end
-
   def input_move(board)
-    puts "#{@name}, please select a sequence of tiles to move your piece. (jiol,m to move, enter to select, ctrl + enter to submit)"
     begin
       moves = []
       tab_moves = board.movable_pieces_of(@number)
       current_position = tab_moves.first
+      system "clear"
 
       until moves.length == 2
-        system "clear"
         board.render({ selected: moves[0], targeted: current_position })
+        puts "\n#{@name}, it is your turn."
+        puts "\nPress tab to cycle through positions, and enter to select position."
+        puts "Press backspace to deselect a piece."
+
         keypress = read_keypress
 
         case keypress
@@ -50,9 +49,10 @@ class HumanPlayer
           exit 0
         end
         current_position = step if board.in_bounds?(step) if step
+          system "clear"
       end
     rescue => e
-      send_message(e.message)
+      puts e.message
       retry
     end
     moves
