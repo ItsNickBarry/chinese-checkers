@@ -1,4 +1,3 @@
-require 'byebug'
 class Board
   attr_accessor :grid, :player_colors
 
@@ -80,7 +79,6 @@ class Board
     return [from[0], from[1] - 1] if direction == :left
     from_row = from[0]
     to_row = from_row + ROW_OFFSETS[direction]
-    debugger if ROW_SIZES[from_row].nil?
     from_row_size = ROW_SIZES[from_row]
     to_row_size = ROW_SIZES[to_row] || -1000
 
